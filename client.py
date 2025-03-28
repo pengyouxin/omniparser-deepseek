@@ -33,6 +33,7 @@ def process_image(
 
         if result['status'] == 'success':
             labeled_image = Image.open(io.BytesIO(base64.b64decode(result['labeled_image'])))
+            labeled_image.save('labeled_image.png')
             return {
                 'status': 'success',
                 'labeled_image': labeled_image,
@@ -143,7 +144,9 @@ if __name__ == "__main__":
     screen_width, screen_height = pyautogui.size()
     print(f"当前屏幕分辨率: {screen_width}x{screen_height}")
 
-    image_path = "./1.png"
+    img = pyautogui.screenshot()
+    img.save('screenshot.png')
+    image_path = "./screenshot.png"
     result = process_image(
         image_path=image_path,
         box_threshold=0.05,

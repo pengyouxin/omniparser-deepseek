@@ -136,11 +136,8 @@ def type_text(bbox, text):
 
 def chat(msg):
     client = OpenAI(
-        # api_key="sk-Lfcrp0IWFYzPU5a6H34RkmqjuEJ63cbWIoC7G1aoou4VTuh7",
-        # api_key="sk-Pm9VAO5FRnQRS9W3mCskCzTpP1kJ52E5w3RgXxlBDVwNmW3n",
-        # base_url="https://chataiapi.com/v1"
-        api_key="sk-974346a3d84b49f2819e07f67dd9efef",
-        base_url="https://api.deepseek.com/v1"
+        api_key="your api-key",
+        base_url="base_url"
     )
     tools = [
         {

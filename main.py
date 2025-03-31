@@ -89,14 +89,14 @@ def bbox_to_coords(bbox, screen_width, screen_height):
     y_center = int((ymin + ymax) / 2 * (screen_height - menu_bar_height)) + menu_bar_height + y_offset
 
     # 添加调试信息
-    print(f"\n坐标转换详情:")
-    print(f"屏幕尺寸: {screen_width} x {screen_height}")
-    print(f"原始bbox: {bbox}")
-    print(f"x轴变换: {xmin:.4f} -> {xmax:.4f} 中点: {(xmin + xmax) / 2:.4f}")
-    print(f"y轴变换: {ymin:.4f} -> {ymax:.4f} 中点: {(ymin + ymax) / 2:.4f}")
-    print(f"考虑菜单栏偏移: {menu_bar_height}px")
-    print(f"向上偏移: {y_offset}px")
-    print(f"计算结果: x={x_center}, y={y_center}")
+    # print(f"\n坐标转换详情:")
+    # print(f"屏幕尺寸: {screen_width} x {screen_height}")
+    # print(f"原始bbox: {bbox}")
+    # print(f"x轴变换: {xmin:.4f} -> {xmax:.4f} 中点: {(xmin + xmax) / 2:.4f}")
+    # print(f"y轴变换: {ymin:.4f} -> {ymax:.4f} 中点: {(ymin + ymax) / 2:.4f}")
+    # print(f"考虑菜单栏偏移: {menu_bar_height}px")
+    # print(f"向上偏移: {y_offset}px")
+    # print(f"计算结果: x={x_center}, y={y_center}")
 
     # 确保坐标在屏幕范围内
     x_center = max(0, min(x_center, screen_width))
@@ -113,15 +113,11 @@ def click(bbox):
     # 获取点击坐标
     x, y = bbox_to_coords(bbox, screen_width, screen_height)
 
-    print(f"\n即将执行点击:")
     print(f"目标坐标: x={x}, y={y}")
-    print("1秒准备时间...")
-    sleep(1)
+    sleep(0.5)
 
     # 移动鼠标到指定位置（使用缓动效果）
     pyautogui.moveTo(x, y, duration=0.5, tween=pyautogui.easeOutQuad)
-
-    print("鼠标已就位，0.5秒后点击...")
     sleep(0.5)
 
     # 获取当前鼠标位置以验证
@@ -132,10 +128,19 @@ def click(bbox):
     pyautogui.click()
     print(f"已点击坐标: x={x}, y={y}")
 
+def type_text(bbox, text):
+    click(bbox)
+    pyautogui.typewrite(text)
+    pyautogui.press("enter")
+    print(f"已输入文本: {text}")
+
 def chat(msg):
     client = OpenAI(
-        api_key="sk-Z1rQi13iPuwpTZDzihTP93bEPnZ5knphNJIRR6zLf2GXYlZc",
-        base_url="https://api.aiclaude.site/v1"
+        # api_key="sk-Lfcrp0IWFYzPU5a6H34RkmqjuEJ63cbWIoC7G1aoou4VTuh7",
+        # api_key="sk-Pm9VAO5FRnQRS9W3mCskCzTpP1kJ52E5w3RgXxlBDVwNmW3n",
+        # base_url="https://chataiapi.com/v1"
+        api_key="sk-974346a3d84b49f2819e07f67dd9efef",
+        base_url="https://api.deepseek.com/v1"
     )
     tools = [
         {
@@ -149,7 +154,7 @@ def chat(msg):
             "type": "function",
             "function": {
                 "name": "click",
-                "description": "将bbox坐标转换成屏幕坐标，并点击鼠标",
+                "description": "在bbox坐标处点击鼠标",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -159,6 +164,27 @@ def chat(msg):
                         }
                     },
                 "required": ["bbox"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "type_text",
+                "description": "在bbox坐标处输入文本并按回车键",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "bbox": {
+                            "type": "array",
+                            "description": "bbox坐标，格式为[xmin, ymin, xmax, ymax]"
+                        },
+                        "text": {
+                            "type": "string",
+                            "description": "要输入的文本"
+                        }
+                    },
+                "required": ["bbox", "text"]
                 }
             }
         }
@@ -174,27 +200,64 @@ def chat(msg):
 
 if __name__ == "__main__":
     msg = [{"role":"system", "content":"""
-    你可以处理用户的请求，例如：识别屏幕中的元素，解析出各个元素的坐标等信息。
-    当用户的要求需要操作计算机才能完成时，你需要自主进行屏幕截屏识别元素并执行点击和键盘输入操作
+    你能够根据用户请求，分析出执行步骤，然后根据步骤执行相应的操作吗。
+    例如：
+    用户：在chrome浏览器中搜索xxx
+    你：step1：截屏分析屏幕元素的坐标。step2：找到chrome图标。step3：点击chrome图标。step4：截屏识别出搜索框。step5：在搜索框中输入xxx。step5：按回车键。
     """}]
     user_input = input("user:")
     msg.append({"role": "user", "content": user_input})
     message = chat(msg)
     print(message)
-    msg.append({"role": message.role, "content": message.content})
-    if message.tool_calls:
+    # msg.append({"role": message.role, "content": message.content})
+    # msg.append(message)
+    """添加历史message否则会导致以下报错
+    openai.BadRequestError: Error code: 400 - {'error': {'message': "Messages with role 'tool' must be a response to a preceding message with 'tool_calls'", 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_request_error'}}
+    """
+
+    # if message.tool_calls:
+    #     for tool_call in message.tool_calls:
+    #         if tool_call.function.name == "process_image":
+    #             screenshot_info = process_image()
+    #             msg.append({"role": "tool", "tool_call_id": tool_call.id, "name": "process_image", "content": screenshot_info})
+    #     message = chat(msg)
+    #     print(message)
+    #     msg.append(message)
+
+    # if message.tool_calls:
+    #     for tool_call in message.tool_calls:
+    #         if tool_call.function.name == "click":
+    #             args = json.loads(tool_call.function.arguments)
+    #             click(args.get("bbox"))
+    #             msg.append({"role": "tool", "tool_call_id": tool_call.id, "name": "click", "content": "已点击坐标"})
+    #     message = chat(msg)
+    #     print(message)
+    #     msg.append(message)
+
+    # if message.tool_calls:
+    #     for tool_call in message.tool_calls:
+    #         if tool_call.function.name == "type_text":
+    #             args = json.loads(tool_call.function.arguments)
+    #             type_text(args.get("bbox"), args.get("text"))
+    #             msg.append({"role": "tool", "tool_call_id": tool_call.id, "name": "type_text", "content": f"已输入文本: {args.get('text')}"})
+    #     message = chat(msg)
+    #     print(message)
+    #     msg.append(message)
+
+    while message.tool_calls:
+        msg.append(message)
         for tool_call in message.tool_calls:
             if tool_call.function.name == "process_image":
                 screenshot_info = process_image()
                 msg.append({"role": "tool", "tool_call_id": tool_call.id, "name": "process_image", "content": screenshot_info})
-    message = chat(msg)
-    print(message)
-
-    if message.tool_calls:
-        for tool_call in message.tool_calls:
             if tool_call.function.name == "click":
                 args = json.loads(tool_call.function.arguments)
                 click(args.get("bbox"))
-                msg.append({"role": "tool", "tool_call_id": tool_call.id, "name": "click", "content": "已点击坐标"})
-    message = chat(msg)
-    print(message)
+                msg.append({"role": "tool", "tool_call_id": tool_call.id, "name": "click", "content": "已点击坐标"}) 
+            if tool_call.function.name == "type_text":
+                args = json.loads(tool_call.function.arguments)
+                type_text(args.get("bbox"), args.get("text"))
+                msg.append({"role": "tool", "tool_call_id": tool_call.id, "name": "type_text", "content": f"已输入文本: {args.get('text')}"})       
+        message = chat(msg)
+        print(message)
+        

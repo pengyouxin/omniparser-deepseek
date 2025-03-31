@@ -66,7 +66,7 @@ def process_image():
     parsed_content_str = '\n'.join([f'icon {i}: ' + str(v) for i,v in enumerate(parsed_content_list)])
     with open("parsed_content.txt", "w", encoding="utf-8") as f:
         f.write(parsed_content_str)
-    print(f"解析结果已保存至：parsed_content.txt")t
+    print(f"解析结果已保存至：parsed_content.txt")
 
 if __name__ == "__main__":
     process_image()
